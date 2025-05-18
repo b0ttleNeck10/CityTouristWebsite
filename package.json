@@ -1,6 +1,10 @@
 {
-  "dependencies": {
-    "@tailwindcss/cli": "^4.1.6",
-    "tailwindcss": "^4.1.6"
-  }
+    "dependencies": {
+        "@tailwindcss/cli": "^4.1.6",
+        "tailwindcss": "^4.1.6"
+    },
+    "AllowedHosts": "*",
+    "ConnectionStrings": {
+        "SportsStoreConnection": "Server=(localdb)\\MSSQLLocalDB;Database=CityTourist;MultipleActiveResultSets=true"
+    }
 }

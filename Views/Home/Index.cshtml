@@ -1,8 +1,136 @@
-﻿@{
+﻿@using CityTouristWebsite.Models.ViewModels
+@model TouristPlaceListViewModel
+
+@{
     ViewData["Title"] = "Home Page";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="search-background container mx-auto my-5 rounded-2xl">
+    <div class="search-bg-color h-full w-full rounded-2xl">
+        <div class="flex flex-col h-full justify-center px-[3rem]">
+            <h2 class="text-4xl font-bold">Explore the Beauty of Cebu</h2>
+            <p class="text-lg font-base">Explore the different places that makes up Cebu!</p>
+            <form asp-action="Index" method="get" class="relative mt-2">
+                <i class="fa-solid fa-magnifying-glass absolute"></i>
+                <input class="bg-white pl-[2rem] py-2 rounded-md w-75" type="text" name="searchQuery" value="@Context.Request.Query["searchQuery"]" placeholder="Search places.." />
+                <button class="ml-3 bg-[#059669] text-white p-4 py-2 rounded-md font-medium cursor-pointer hover:bg-[#046C4B]"><span class="mr-2"><i class="fa-solid fa-compass"></i></span>Explore Now</button>
+            </form>
+        </div>
+    </div>
 </div>
+<div class="container mx-auto mb-5">
+    <div class="grid lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2 gap-4">
+        @foreach (var place in Model.Places)
+        {
+            <div class="rounded-md bg-white shadow-md flex flex-col h-full">
+                <img class="rounded-t-md" src="@Url.Content(@place.ImagePath)" alt="@place.PlaceName" style="height: 188px; width: 100%; object-fit: fill;"/>
+                <div class="p-2 flex flex-col justify-between flex-grow">
+                    <div>
+                        <h5 class="text-lg font-medium">@place.PlaceName</h5>
+                        <p class="text-base text-justify mt-2">@place.Description</p>
+                    </div>
+                    <div class="text-end">
+                        <a asp-action="Details" asp-route-id="@place.Id" class="text-sm mt-2 text-sky-500">See More <span><i class="fa-solid fa-arrow-right-long"></i></span></a>
+                    </div>                    
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (!Model.Places.Any())
+    {
+        <div class="text-gray-600 my-6 h-75 flex justify-center items-center">
+            <p>No places found for "@Context.Request.Query["searchQuery"]".</p>
+        </div>
+    }
+
+    @if (Model.PagingInfo.TotalPages > 1)
+    {
+        <div class="mt-4 flex justify-center">
+            @for (int i = 1; i <= Model.PagingInfo.TotalPages; i++)
+            {
+                <a asp-action="Index"
+                   asp-route-page="@i"
+                   asp-route-searchQuery="@Context.Request.Query["searchQuery"]"
+                   class="px-3 py-1 mx-1 rounded-md border @((i == Model.PagingInfo.CurrentPage) ? "bg-green-600 text-white" : "bg-white text-black")">
+                    @i
+                </a>
+            }
+        </div>
+    }
+</div>
+<div class="h-[450px] bg-white">
+    <div class="container mx-auto flex flex-col justify-center items-center h-full">
+        <h2 class="text-5xl font-bold mb-3">KNOW A DESTINATION?</h2>
+        <p class="text-lg">You can add it here.</p>
+        <button class="mt-5 bg-[#059669] text-white py-2 px-4 rounded-md hover:bg-[#046C4B] cursor-pointer" onclick="document.getElementById('addModal').classList.remove('hidden')"><span class="mr-2"><i class="fa-solid fa-plus"></i></span>Add Place</button>
+    </div>
+</div>
+
+<!-- Modal -->
+<div id="addModal" class="fixed inset-0 bg-gray-500/75 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg w-full max-w-2xl shadow-lg">
+        <div class="px-6 py-4 flex justify-between items-center border-b border-gray-300">
+            <h3 class="text-xl text-gray-900 font-semibold">Add a Tourist Place</h3>
+            <button onclick="document.getElementById('addModal').classList.add('hidden')" class="text-lg text-gray-500 hover:text-gray-700 cursor-pointer">&times;</button>
+        </div>
+        <div class="p-6">
+            <form asp-action="Add" method="post" enctype="multipart/form-data">
+                <div class="mb-2">
+                    <label asp-for="NewPlace.PlaceName" class="block font-medium mb-1">Place Name</label>
+                    <input asp-for="NewPlace.PlaceName" class="w-full border border-gray-400 rounded-md p-2" />
+                </div>
+
+                <div class="mb-2">
+                    <label asp-for="NewPlace.Description" class="block font-medium mb-1">Description</label>
+                    <textarea asp-for="NewPlace.Description" class="w-full border border-gray-400 rounded-md p-2"></textarea>
+                </div>
+
+                <div class="mb-2">
+                    <label asp-for="NewPlace.Tips" class="block font-medium mb-1">Tips</label>
+                    <textarea asp-for="NewPlace.Tips" class="w-full border border-gray-400 rounded-md p-2"></textarea>
+                </div>
+
+                <div class="mb-2">
+                    <label class="block font-medium mb-1">Image</label>
+
+                    <label for="imageUpload" class="cursor-pointer inline-block bg-[#059669] text-white px-4 py-2 rounded hover:bg-[#046C4B]">
+                        <i class="fa-solid fa-upload mr-2"></i> Choose Image
+                    </label>
+
+                    <span id="fileName" class="ml-2 text-sm text-gray-600">No file chosen</span>
+
+                    <input id="imageUpload" asp-for="NewPlace.ImageFile" type="file" class="hidden" onchange="updateFileName(this)" />
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="NewPlace.IframeLink" class="block font-medium mb-1">Google Maps Embed Link</label>
+                    <input asp-for="NewPlace.IframeLink" class="w-full border border-gray-400 rounded-md p-2" />
+                </div>
+
+                <div class="flex justify-end gap-3">
+                    <button type="button"
+                            onclick="document.getElementById('addModal').classList.add('hidden')"
+                            class="py-2 px-4 border rounded-md text-gray-600 hover:bg-gray-100 cursor-pointer">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="py-2 px-4 bg-[#059669] text-white rounded-md hover:bg-[#046C4B] cursor-pointer">
+                        Add Place
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function updateFileName(input) {
+            const fileName = input.files.length > 0 ? input.files[0].name : "No file chosen";
+            document.getElementById("fileName").textContent = fileName;
+        }
+    </script>
+
+}
