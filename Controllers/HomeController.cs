@@ -54,7 +54,6 @@ public class HomeController : Controller
     {
         if (model.NewPlace.ImageFile != null)
         {
-            // Generate a unique filename
             string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/places");
             Directory.CreateDirectory(uploadsFolder); // Ensure the folder exists
 
@@ -69,11 +68,9 @@ public class HomeController : Controller
             model.NewPlace.ImagePath = "/images/places/" + uniqueFileName;
         }
 
-        // Save to DB
         _context.TouristPlaces.Add(model.NewPlace);
         await _context.SaveChangesAsync();
 
-        // Redirect back to Index
         return RedirectToAction("Index");
     }
 
@@ -87,4 +84,41 @@ public class HomeController : Controller
 
         return View(place);
     }
+
+    [HttpPost]
+    public async Task<IActionResult> Edit(TouristPlace model)
+    {
+        var existingPlace = await _context.TouristPlaces.FindAsync(model.Id);
+        if (existingPlace == null)
+        {
+            return NotFound();
+        }
+
+        if (model.ImageFile != null)
+        {
+            string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/places");
+            Directory.CreateDirectory(uploadsFolder); // Ensure the folder exists
+
+            string uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(model.ImageFile.FileName);
+            string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            {
+                await model.ImageFile.CopyToAsync(fileStream);
+            }
+
+            existingPlace.ImagePath = "/images/places/" + uniqueFileName;
+        }
+
+        existingPlace.PlaceName = model.PlaceName;
+        existingPlace.Description = model.Description;
+        existingPlace.Tips = model.Tips;
+        existingPlace.IframeLink = model.IframeLink;
+
+        _context.TouristPlaces.Update(existingPlace);
+        await _context.SaveChangesAsync();
+
+        return RedirectToAction("Details", new { id = model.Id });
+    }
+
 }
