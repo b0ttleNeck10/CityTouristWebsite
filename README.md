@@ -18,3 +18,7 @@
 5. Go to Package Manager Console
 6. Type "update-database"
 7. Run the program
+
+Members: (Who Contibuted) 
+1. Lauron, Dexter
+2. Racal, James
